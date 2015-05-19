@@ -311,7 +311,8 @@ package {
         'video': (this.client) ? this.streamHasVideo : null,
         'state': this.currentState,
         'streamURL': (this.urlParsed) ? this.urlParsed.full : null,
-        'duration': meta.duration ? meta.duration : null
+        'duration': meta.duration ? meta.duration : null,
+        'currentTime' : (this.client) ? this.client.currentTime() : -1
       };
 
       return status;

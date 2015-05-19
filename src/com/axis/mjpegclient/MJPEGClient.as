@@ -84,6 +84,11 @@ package com.axis.mjpegclient {
       return mjpeg.getFps();
     };
 
+    public function currentTime():Number {
+      /* not yet implemented : mjpeg.getCurrentTime() */
+      return -1;
+    };
+
     private function onDisconnect(e:Event):void {
       mjpeg.clear();
       dispatchEvent(new ClientEvent(ClientEvent.STOPPED));

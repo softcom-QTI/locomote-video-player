@@ -72,5 +72,10 @@ package com.axis {
      * Returns the current achieved frames per second for the client.
      */
     function currentFPS():Number;
+
+    /**
+     * The position of the playhead, in seconds.
+     */
+    function currentTime():Number;
   }
 }
