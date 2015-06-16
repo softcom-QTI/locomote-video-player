@@ -93,6 +93,9 @@ package com.axis.rtmpclient {
         this.ns = new NetStream(this.nc);
         this.setupNetStream();
 
+        // for snapshot
+        this.ns.send("|RtmpSampleAccess", true, true);
+
         Logger.log('RTMPClient: starting stream: \'' + this.streamId + '\'');
         this.ns.play(this.streamId);
       }

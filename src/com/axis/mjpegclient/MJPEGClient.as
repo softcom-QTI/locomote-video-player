@@ -6,6 +6,7 @@ package com.axis.mjpegclient {
   import com.axis.mjpegclient.Handle;
   import com.axis.mjpegclient.MJPEG;
   import flash.display.DisplayObject;
+  import flash.display.BitmapData;
   import flash.display.Sprite;
   import flash.display.LoaderInfo;
   import flash.display.Stage;
@@ -87,6 +88,12 @@ package com.axis.mjpegclient {
     public function currentTime():Number {
       /* not yet implemented : mjpeg.getCurrentTime() */
       return -1;
+    };
+
+    public function takeSnapshot():BitmapData {
+      var bd:BitmapData = new BitmapData(mjpeg.width, mjpeg.height);
+      bd.draw(mjpeg);
+      return bd;
     };
 
     private function onDisconnect(e:Event):void {

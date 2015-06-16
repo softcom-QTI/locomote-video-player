@@ -1,6 +1,7 @@
 package com.axis {
   import flash.display.DisplayObject;
   import flash.events.IEventDispatcher;
+  import flash.display.BitmapData;
 
   /**
    * The interface to implement for a client to be used by Player.
@@ -77,5 +78,10 @@ package com.axis {
      * The position of the playhead, in seconds.
      */
     function currentTime():Number;
+
+    /**
+     * Take a snapshot of the current played video
+     */
+    function takeSnapshot():BitmapData;
   }
 }

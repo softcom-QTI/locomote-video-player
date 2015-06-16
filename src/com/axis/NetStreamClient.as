@@ -1,12 +1,16 @@
 package com.axis {
   import flash.display.DisplayObject;
+  import flash.display.BitmapData;
+  import flash.display.Sprite;
   import flash.events.EventDispatcher;
   import flash.events.AsyncErrorEvent;
   import flash.events.DRMErrorEvent;
   import flash.events.IOErrorEvent;
   import flash.events.NetStatusEvent;
+  import flash.events.SecurityErrorEvent;
   import flash.media.Video;
   import flash.net.NetStream;
+  import flash.geom.Matrix;
 
   import mx.utils.ObjectUtil;
 
@@ -21,6 +25,11 @@ package com.axis {
     private var video:Video = new Video();
     protected var ns:NetStream;
     protected var currentState:String = 'stopped';
+    protected var meta:Object = {
+        'width': video.width,
+        'height': video.height,
+        'duration': 0
+      };
 
     public function hasVideo():Boolean {
       return (0 < this.ns.info.videoBufferByteLength);
@@ -38,6 +47,17 @@ package com.axis {
       return this.ns.time;
     };
 
+    public function takeSnapshot():BitmapData {
+      var bd:BitmapData = new BitmapData(meta.width, meta.height);
+      
+      // tricks:  to have the correct size it must be scaled against the default size of a Video object
+      var videoTmp:Video = new Video();
+      var transformMatrix:Matrix = new Matrix();
+      transformMatrix.scale(bd.width / videoTmp.width , bd.height / videoTmp.height);
+      bd.draw(video,transformMatrix);
+      return bd;
+    };
+
     protected function setupNetStream():void {
       this.ns.bufferTime = Player.config.buffer;
       this.ns.client = this;
@@ -50,6 +70,8 @@ package com.axis {
       this.ns.addEventListener(AsyncErrorEvent.ASYNC_ERROR, onAsyncError);
       this.ns.addEventListener(DRMErrorEvent.DRM_ERROR, onDRMError);
       this.ns.addEventListener(IOErrorEvent.IO_ERROR, onIOError);
+      this.ns.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onSecurityError); 
+
       this.video.attachNetStream(this.ns);
     }
 
@@ -91,12 +113,12 @@ package com.axis {
 
     public function onMetaData(item:Object):void {
       Logger.log('Netstream Metadata:', ObjectUtil.toString(item));
-
-      dispatchEvent(new ClientEvent(ClientEvent.META, {
+      this. meta = {
         'width': item.width,
         'height': item.height,
         'duration': item.duration
-      }));
+      };
+      dispatchEvent(new ClientEvent(ClientEvent.META, meta));
     }
 
     public function onPlayStatus(event:Object):void {
@@ -108,6 +130,7 @@ package com.axis {
 
       if (this.ns.bufferTime === 0 && ('NetStream.Play.Start' === event.info.code || 'NetStream.Unpause.Notify' === event.info.code)) {
         this.currentState = 'playing';
+        this.ns.send("|RtmpSampleAccess", true, true);
         dispatchEvent(new ClientEvent(ClientEvent.START_PLAY));
         return;
       }
@@ -133,6 +156,18 @@ package com.axis {
       if ('NetStream.Pause.Notify' === event.info.code) {
         this.currentState = 'paused';
         dispatchEvent(new ClientEvent(ClientEvent.PAUSED, { 'reason': 'user' }));
+        return;
+      }
+
+      if ('NetGroup.Connect.Success' === event.info.code) {
+        // To allows to take a snapshot
+        this.ns.send("|RtmpSampleAccess", true, true);
+        return;
+      }
+
+      if ('NetConnection.Connect.Success' === event.info.code) {
+        // To allows to take a snapshot
+        this.ns.send("|RtmpSampleAccess", true, true);
         return;
       }
 
@@ -173,6 +208,10 @@ package com.axis {
           ErrorManager.dispatchError(errorCode);
         }
       }
+    }
+
+    private function onSecurityError(event:SecurityErrorEvent):void {
+      Logger.log('SecurityError status:', event);
     }
   }
 }

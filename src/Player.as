@@ -12,6 +12,7 @@ package {
   import com.axis.rtspclient.RTSPClient;
   import com.axis.rtspclient.RTSPoverHTTPHandle;
   import com.axis.rtspclient.RTSPoverTCPHandle;
+  import com.axis.util.ImageUtil;
 
   import flash.display.LoaderInfo;
   import flash.display.Sprite;
@@ -20,6 +21,9 @@ package {
   import flash.display.StageDisplayState;
   import flash.display.StageScaleMode;
   import flash.display.DisplayObject;
+  import flash.display.IGraphicsData;
+  import flash.display.BitmapData;
+  import flash.display.GraphicsBitmapFill;
   import flash.display.InteractiveObject;
   import flash.events.Event;
   import flash.events.MouseEvent;
@@ -30,6 +34,7 @@ package {
   import flash.media.Video;
   import flash.net.NetStream;
   import flash.system.Security;
+  import flash.geom.Matrix;
   import mx.utils.StringUtil;
 
   [SWF(frameRate="60")]
@@ -71,6 +76,7 @@ package {
 
       Security.allowDomain("*");
       Security.allowInsecureDomain("*");
+      Security.loadPolicyFile("https://avhsqual.videoprotector.com/crossdomain.xml");
 
       trace('Loaded Locomote, version ' + StringUtil.trim(new Version().toString()));
 
@@ -124,6 +130,7 @@ package {
       ExternalInterface.addCallback("muteMicrophone", muteMicrophone);
       ExternalInterface.addCallback("unmuteMicrophone", unmuteMicrophone);
       ExternalInterface.addCallback("setConfig", setConfig);
+      ExternalInterface.addCallback("takeSnapshot", takeSnapshot);
 
       /* Audio Transmission API */
       ExternalInterface.addCallback("startAudioTransmit", startAudioTransmit);
@@ -233,6 +240,10 @@ package {
       case 'https':
         /* Progressive download over HTTP */
         client = new HTTPClient(urlParsed);
+        var policyFile:String = urlParsed.protocol + "://" + urlParsed.host + (urlParsed.portDefined ? ":" +  urlParsed.port : "") + "/crossdomain.xml";
+        Logger.log("Policy file : " + policyFile);
+        Security.loadPolicyFile(policyFile);
+
         break;
 
       case 'httpm':
@@ -245,6 +256,9 @@ package {
       case 'rtmpt':
         /* RTMP */
         client = new RTMPClient(urlParsed);
+        var policyFile:String = "https://" + urlParsed.host  + "/crossdomain.xml";
+        Logger.log("Policy file : " + policyFile);
+        Security.loadPolicyFile(policyFile);
         break;
 
       default:
@@ -382,6 +396,50 @@ package {
 
       if (!state)
         this.stage.displayState = StageDisplayState.NORMAL;
+    }
+
+
+    public function takeSnapshot():String {
+      Logger.log("Snapshot !");
+      if(this.client){
+        try {
+          /*
+          var displayObj:DisplayObject = this.client.getDisplayObject();
+          var bd:BitmapData = new BitmapData(meta.width, meta.height);
+          Logger.log("Snapshot : " + bd.width + "x" + bd.height);
+          var videoTmp:Video = new Video();
+          var transformMatrix:Matrix = new Matrix();
+          transformMatrix.scale(bd.width / videoTmp.width , bd.height / videoTmp.height);
+          bd.draw(displayObj, transformMatrix);
+          */
+
+          var container:Sprite = new Sprite();
+          container.addChild(this.client.getDisplayObject());
+
+          var bufferContainer : Sprite = new Sprite();
+
+          Logger.log("graphics " + container.graphics);
+          var grData:Vector.<IGraphicsData> = container.graphics.readGraphicsData();
+          if(grData.length > 0) {
+            Logger.log("graphics 1 ");
+          }
+          Logger.log("graphics 1 " + grData);
+          var gr:GraphicsBitmapFill = GraphicsBitmapFill(this.graphics.readGraphicsData());
+
+          
+
+          Logger.log("graphics 2 " + gr);
+          Logger.log("graphics 3 " + gr.bitmapData);
+          var bd:BitmapData = gr.bitmapData;
+
+          /*var bd:BitmapData = this.client.takeSnapshot();*/
+          return ImageUtil.bitmapToJpegBase64(bd);
+        }
+        catch(e:Error){
+          Logger.log("takeSnapshot error : " + e.errorID + " - " + e.toString() + " - " + e.getStackTrace());
+        }
+      }
+      return null;
     }
 
     private function onStageAdded(e:Event):void {

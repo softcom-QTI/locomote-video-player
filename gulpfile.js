@@ -31,7 +31,7 @@ function build(cb) {
     'use-resource-bundle-metadata': true,
     'accessible': false,
     'allow-source-path-overlap': false,
-    'target-player': 11.1,
+    'target-player': 11.6,
     'locale': 'en_US',
     'output': 'dist/Player.swf',
     'debug': true,

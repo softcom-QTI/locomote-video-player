@@ -149,6 +149,10 @@
       return this.e.playerStatus();
     },
 
+    takeSnapshot: function() {
+      return this.e.takeSnapshot();
+    },
+
     speakerVolume: function(volume) {
       this.e.speakerVolume(volume);
       return this;
